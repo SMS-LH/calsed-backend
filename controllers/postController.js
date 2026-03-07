@@ -30,10 +30,9 @@ exports.createPost = async (req, res) => {
     const savedPost = await newPost.save();
 
     // Envoi de la Newsletter (Asynchrone pour ne pas bloquer la réponse)
-    // On ne bloque pas si l'envoi mail échoue
     Subscriber.find({}).then(subs => {
-      if (subs.length > 0) sendNewPostAlert(subs, savedPost);
-    });
+      if (subs && subs.length > 0) sendNewPostAlert(subs, savedPost);
+    }).catch(err => console.error("Erreur newsletter:", err));
 
     res.status(201).json(savedPost);
   } catch (err) {
@@ -51,15 +50,30 @@ exports.deletePost = async (req, res) => {
 };
 
 // --- INTERACTIONS (LIKES & COMMENTAIRES) ---
+
+// MODIFICATION : Gère maintenant les membres ET les visiteurs publics
 exports.likePost = async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
-    const userId = req.user.id; // Vient du token
+    if (!post) return res.status(404).json({ message: "Article non trouvé" });
+
+    /**
+     * LOGIQUE D'IDENTIFICATION :
+     * 1. Si l'utilisateur est connecté, on prend son ID depuis le token (req.user.id)
+     * 2. Si c'est un visiteur, on prend l'ID envoyé dans le body (req.body.userId)
+     */
+    const userId = req.user ? (req.user._id || req.user.id) : req.body.userId;
+
+    if (!userId) {
+      return res.status(400).json({ message: "Identifiant utilisateur manquant" });
+    }
 
     // Vérifier si déjà liké
-    if (post.likes.includes(userId)) {
+    const index = post.likes.indexOf(userId);
+    
+    if (index !== -1) {
       // Si oui, on enlève le like (Unlike)
-      post.likes = post.likes.filter(id => id !== userId);
+      post.likes.splice(index, 1);
     } else {
       // Sinon on ajoute
       post.likes.push(userId);
@@ -68,26 +82,32 @@ exports.likePost = async (req, res) => {
     await post.save();
     res.json(post.likes); // Renvoie la nouvelle liste des likes
   } catch (err) {
-    res.status(500).json({ message: "Erreur like" });
+    console.error("Erreur Like:", err);
+    res.status(500).json({ message: "Erreur lors de l'action de like" });
   }
 };
 
 exports.commentPost = async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json({ message: "Article non trouvé" });
     
     const newComment = {
-      author: req.user.name,      // Le nom vient du token décodé
-      authorId: req.user.id,
+      author: req.user.name,      // Le nom vient du token décodé (route protégée)
+      authorId: req.user.id || req.user._id,
       content: req.body.content,
       date: new Date()
     };
+
+    if (!newComment.content) {
+      return res.status(400).json({ message: "Le contenu du commentaire est requis" });
+    }
 
     post.comments.push(newComment);
     await post.save();
     
     res.status(201).json(post.comments);
   } catch (err) {
-    res.status(500).json({ message: "Erreur commentaire" });
+    res.status(500).json({ message: "Erreur lors de l'ajout du commentaire" });
   }
 };
