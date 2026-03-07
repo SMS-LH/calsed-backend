@@ -1,19 +1,25 @@
 const nodemailer = require('nodemailer');
 
-// Configuration du transporteur
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
-  port: 587, // Port alternatif souvent plus ouvert sur les serveurs Cloud
-  secure: false, // Doit être false pour le port 587
+  port: 465, // On revient sur le port SSL sécurisé
+  secure: true, 
+  service: 'gmail', // On force l'identification du service
+  pool: true, // Utilise des connexions persistantes pour éviter les timeouts répétitifs
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    pass: process.env.EMAIL_PASS, // Rappel: 16 caractères sans espaces
   },
   tls: {
-    // Force la connexion à ne pas échouer même si le certificat est auto-signé
-    ciphers: 'SSLv3',
-    rejectUnauthorized: false
-  }
+    // Indispensable pour les environnements Cloud comme Render
+    rejectUnauthorized: false,
+    servername: 'smtp.gmail.com'
+  },
+  debug: true, // Active les logs détaillés dans Render pour voir ce qui bloque
+  logger: true, // Affiche la conversation SMTP dans tes logs Render
+  connectionTimeout: 20000, // On double le temps d'attente à 20 secondes
+  greetingTimeout: 20000,
+  socketTimeout: 20000
 });
 
 // Vérification de la connexion au lancement
