@@ -2,19 +2,25 @@ const nodemailer = require('nodemailer');
 
 // Configuration du transporteur
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true, // Utilise SSL/TLS pour éviter les blocages serveurs
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    pass: process.env.EMAIL_PASS, // Doit être le "Mot de passe d'application" de 16 caractères
   },
+  tls: {
+    // Évite les erreurs de certificat sur les environnements de déploiement Linux
+    rejectUnauthorized: false
+  }
 });
 
 // Vérification de la connexion au lancement
 transporter.verify((error, success) => {
   if (error) {
-    console.log("❌ Erreur de configuration mail :", error);
+    console.log("❌ Erreur de configuration mail :", error.message);
   } else {
-    console.log("✅ Serveur de mail prêt à envoyer vos messages");
+    console.log("✅ Serveur de mail CALSED prêt");
   }
 });
 
