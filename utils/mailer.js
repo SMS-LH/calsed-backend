@@ -3,14 +3,15 @@ const nodemailer = require('nodemailer');
 // Configuration du transporteur
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
-  port: 465,
-  secure: true, // Utilise SSL/TLS pour éviter les blocages serveurs
+  port: 587, // Port alternatif souvent plus ouvert sur les serveurs Cloud
+  secure: false, // Doit être false pour le port 587
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS, // Doit être le "Mot de passe d'application" de 16 caractères
+    pass: process.env.EMAIL_PASS,
   },
   tls: {
-    // Évite les erreurs de certificat sur les environnements de déploiement Linux
+    // Force la connexion à ne pas échouer même si le certificat est auto-signé
+    ciphers: 'SSLv3',
     rejectUnauthorized: false
   }
 });
