@@ -222,6 +222,30 @@ const sendNewProductAlert = async (subscribers, product) => {
   return Promise.all(promises);
 };
 
+// --- NOUVEAU : ALERTE DÉCLARATION COTISATION (WAVE/OM) ---
+const sendPaymentDeclarationAlert = async (user, payment) => {
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+      <h2 style="color: #0A2A5C; text-align: center; border-bottom: 2px solid #eee; padding-bottom: 10px;">💰 Déclaration de Cotisation</h2>
+      <p>Bonjour Admin,</p>
+      <p>Le membre <strong>${user.prenom} ${user.nom}</strong> vient de déclarer avoir effectué un transfert pour sa cotisation.</p>
+      
+      <div style="background-color: #f8f9fa; padding: 15px; border-left: 4px solid #f59e0b; margin: 20px 0;">
+        <p style="margin: 5px 0;"><strong>Montant attendu :</strong> <span style="font-size: 18px; font-weight: bold; color: #0A2A5C;">${payment.amount.toLocaleString()} FCFA</span></p>
+        <p style="margin: 5px 0;"><strong>Nombre de mois :</strong> ${payment.months}</p>
+        <p style="margin: 5px 0;"><strong>Email du membre :</strong> ${user.email}</p>
+      </div>
+
+      <p style="color: #555; line-height: 1.5;"><strong>Action requise :</strong><br> Veuillez vérifier votre solde Wave ou Orange Money. Si le transfert a bien été reçu, rendez-vous sur le tableau de bord Administrateur pour valider le paiement.</p>
+      
+      <div style="text-align: center; margin-top: 30px;">
+        <a href="${process.env.FRONTEND_URL}/admin" style="background-color: #0A2A5C; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">Valider sur le Dashboard</a>
+      </div>
+    </div>`;
+  
+  return sendEmail(process.env.ADMIN_EMAIL, `💸 Nouvelle Déclaration : ${payment.amount} FCFA de ${user.prenom} ${user.nom}`, html);
+};
+
 module.exports = { 
   sendEmail, 
   sendAdminNotification, 
@@ -232,5 +256,6 @@ module.exports = {
   sendNewOrderAdminAlert,
   sendOrderDelivered,
   sendNewPostAlert, 
-  sendNewProductAlert 
+  sendNewProductAlert,
+  sendPaymentDeclarationAlert
 };

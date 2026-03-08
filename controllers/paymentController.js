@@ -1,4 +1,6 @@
 const Payment = require("../models/Payment");
+const User = require("../models/User"); // Ajout de l'import User
+const { sendPaymentDeclarationAlert } = require("../utils/sendEmail"); // Ajout de l'import email
 
 // 1. DÉCLARER UN PAIEMENT (MANUEL OU AUTO)
 exports.declareManualPayment = async (req, res) => {
@@ -15,6 +17,20 @@ exports.declareManualPayment = async (req, res) => {
     });
 
     const savedPayment = await newPayment.save();
+
+    // --- NOUVEAUTÉ : Envoi du mail à l'administrateur ---
+    try {
+      const user = await User.findById(userId);
+      if (user) {
+        // On déclenche l'e-mail sans mettre de 'await' pour ne pas faire patienter l'utilisateur
+        sendPaymentDeclarationAlert(user, savedPayment).catch(err => {
+            console.error("❌ Erreur lors de l'envoi de l'alerte Admin :", err.message);
+        });
+      }
+    } catch (userError) {
+      console.error("⚠️ Impossible de récupérer l'utilisateur pour l'e-mail :", userError.message);
+    }
+    // ----------------------------------------------------
 
     res.status(201).json({ 
       success: true, 

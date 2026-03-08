@@ -6,11 +6,17 @@ const PaymentSchema = new mongoose.Schema({
     required: true, 
     trim: true 
   }, 
-  amount: { type: Number, required: true },
-  months: { type: Number, required: true },
+  amount: { 
+    type: Number, 
+    required: true 
+  },
+  months: { 
+    type: Number, 
+    required: true 
+  },
   type: { 
     type: String, 
-    default: 'Wave', 
+    default: 'Wave/OM (Déclaré)', // Mis à jour pour refléter notre nouvelle méthode
     trim: true 
   },
   reference: { 
@@ -20,11 +26,12 @@ const PaymentSchema = new mongoose.Schema({
   },
   status: { 
     type: String, 
+    enum: ['pending', 'completed', 'failed'], // Sécurité : Seules ces 3 valeurs sont autorisées
     default: 'pending', 
     trim: true 
   }
 }, {
-  timestamps: true
+  timestamps: true // Génère automatiquement createdAt et updatedAt
 });
 
 module.exports = mongoose.model('Payment', PaymentSchema);
