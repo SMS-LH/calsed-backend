@@ -1,25 +1,13 @@
 const nodemailer = require('nodemailer');
 
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465, // On revient sur le port SSL sécurisé
-  secure: true, 
-  service: 'gmail', // On force l'identification du service
-  pool: true, // Utilise des connexions persistantes pour éviter les timeouts répétitifs
+  host: 'smtp-relay.brevo.com',
+  port: 2525, // LE PORT MAGIQUE NON BLOQUÉ PAR RENDER
+  secure: false,
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS, // Rappel: 16 caractères sans espaces
-  },
-  tls: {
-    // Indispensable pour les environnements Cloud comme Render
-    rejectUnauthorized: false,
-    servername: 'smtp.gmail.com'
-  },
-  debug: true, // Active les logs détaillés dans Render pour voir ce qui bloque
-  logger: true, // Affiche la conversation SMTP dans tes logs Render
-  connectionTimeout: 20000, // On double le temps d'attente à 20 secondes
-  greetingTimeout: 20000,
-  socketTimeout: 20000
+    pass: process.env.EMAIL_PASS,
+  }
 });
 
 // Vérification de la connexion au lancement
