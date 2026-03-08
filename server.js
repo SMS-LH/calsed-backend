@@ -25,6 +25,7 @@ const donateRoutes = require('./routes/donate');
 const newsletterRoutes = require('./routes/newsletter');
 const uploadRoutes = require('./routes/upload');
 const paymentRoutes = require('./routes/paymentRoutes');
+const settingRoutes = require('./routes/settingRoutes'); // <-- AJOUT DE LA ROUTE SETTINGS
 
 // --- INITIALISATION APP ---
 const app = express();
@@ -79,6 +80,7 @@ app.use('/api/donate', donateRoutes);
 app.use('/api/newsletter', newsletterRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/payment', paymentRoutes);
+app.use('/api/settings', settingRoutes); // <-- AJOUT DU MIDDLEWARE SETTINGS
 
 // --- ROUTE DE SANTÉ (HEALTH CHECK) ---
 app.get('/', (req, res) => {
