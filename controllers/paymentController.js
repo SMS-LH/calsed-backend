@@ -1,6 +1,6 @@
 const Payment = require("../models/Payment");
 const User = require("../models/User"); // Ajout de l'import User
-const { sendPaymentDeclarationAlert } = require("../utils/sendEmail"); // Ajout de l'import email
+const { sendPaymentDeclarationAlert } = require("../utils/mailer"); // Ajout de l'import email
 
 // 1. DÉCLARER UN PAIEMENT (MANUEL OU AUTO)
 exports.declareManualPayment = async (req, res) => {
