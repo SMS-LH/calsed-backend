@@ -1,21 +1,23 @@
 const nodemailer = require('nodemailer');
 
+// --- CONFIGURATION GMAIL OAUTH2 (Sécurisé pour Render) ---
 const transporter = nodemailer.createTransport({
-  host: 'smtp-relay.brevo.com',
-  port: 2525, // LE PORT MAGIQUE NON BLOQUÉ PAR RENDER
-  secure: false,
+  service: 'gmail',
   auth: {
+    type: 'OAuth2',
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    clientId: process.env.GMAIL_CLIENT_ID,
+    clientSecret: process.env.GMAIL_CLIENT_SECRET,
+    refreshToken: process.env.GMAIL_REFRESH_TOKEN
   }
 });
 
 // Vérification de la connexion au lancement
 transporter.verify((error, success) => {
   if (error) {
-    console.log("❌ Erreur de configuration mail :", error.message);
+    console.log("❌ Erreur de configuration mail OAuth2 :", error.message);
   } else {
-    console.log("✅ Serveur de mail CALSED prêt");
+    console.log("✅ Serveur de mail CALSED prêt (Connecté via Google API)");
   }
 });
 
@@ -126,7 +128,7 @@ const sendReminderEmail = async (email, name) => {
   }
 };
 
-// --- SÉCURITÉ : MOT DE PASSE OUBLIÉ (AJOUTÉ ICI) ---
+// --- SÉCURITÉ : MOT DE PASSE OUBLIÉ ---
 const sendResetPasswordEmail = async (email, token) => {
   const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${token}`;
 
@@ -278,7 +280,7 @@ module.exports = {
   sendAdminNotification, 
   sendMemberStatusEmail,
   sendReminderEmail, 
-  sendResetPasswordEmail, // <--- AJOUTÉ ICI POUR L'EXPORT
+  sendResetPasswordEmail,
   sendOrderConfirmation,
   sendNewOrderAdminAlert,
   sendOrderDelivered,
