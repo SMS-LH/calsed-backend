@@ -1,5 +1,5 @@
 const { google } = require('googleapis');
-
+const MailComposer = require('nodemailer/lib/mail-composer');
 // --- CONFIGURATION GMAIL API (HTTPS - PORT 443) ---
 const OAuth2 = google.auth.OAuth2;
 
@@ -18,30 +18,26 @@ const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
 // --- FONCTION GÉNÉRIQUE D'ENVOI VIA HTTP ---
 const sendEmail = async (to, subject, htmlContent, replyTo = null) => {
   try {
-    // Encodage spécial pour accepter les accents dans le sujet
-    const utf8Subject = `=?utf-8?B?${Buffer.from(subject).toString('base64')}?=`;
-    
-    // Construction manuelle de l'email (Format RFC 2822)
-    const messageParts = [
-      `From: "Réseau CALSED" <${process.env.EMAIL_USER}>`,
-      `To: ${to}`,
-      replyTo ? `Reply-To: ${replyTo}` : '',
-      `Subject: ${utf8Subject}`,
-      'MIME-Version: 1.0',
-      'Content-Type: text/html; charset=utf-8',
-      '',
-      htmlContent,
-    ];
-    const message = messageParts.filter(line => line !== '').join('\n');
+    // 1. Nodemailer "dessine" le mail avec les bons standards HTML/CSS
+    const mail = new MailComposer({
+      from: `"Réseau CALSED" <${process.env.EMAIL_USER}>`,
+      to: to,
+      replyTo: replyTo || process.env.EMAIL_USER,
+      subject: subject,
+      html: htmlContent,
+      textEncoding: 'base64'
+    });
 
-    // L'API Gmail exige un format Base64 sécurisé pour le web
-    const encodedMessage = Buffer.from(message)
-      .toString('base64')
+    // On génère le code parfait du mail
+    const messageBuffer = await mail.compile().build();
+    
+    // 2. On encode ce code au format strict exigé par Google API
+    const encodedMessage = messageBuffer.toString('base64')
       .replace(/\+/g, '-')
       .replace(/\//g, '_')
       .replace(/=+$/, '');
 
-    // Envoi via l'API HTTPS (Impossible à bloquer par Render)
+    // 3. On envoie via HTTPS (Ça passe Render sans souci !)
     const res = await gmail.users.messages.send({
       userId: 'me',
       requestBody: {
@@ -49,7 +45,7 @@ const sendEmail = async (to, subject, htmlContent, replyTo = null) => {
       },
     });
 
-    if (!Array.isArray(to)) console.log('✅ Email envoyé via API (ID: ' + res.data.id + ')');
+    if (!Array.isArray(to)) console.log('✅ Email envoyé avec un design parfait (ID: ' + res.data.id + ')');
     return res;
   } catch (error) {
     console.error("❌ Erreur d'envoi API Gmail:", error.message);
