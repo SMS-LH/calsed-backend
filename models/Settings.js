@@ -6,18 +6,17 @@ const settingsSchema = new mongoose.Schema({
     default: "home_config", 
     unique: true 
   },
-  data: {
-    heroTitle: { type: String, default: '', trim: true },
-    heroSubtitle: { type: String, default: '', trim: true },
-    heroImage: { type: String, default: '' },
-    philoTitle: { type: String, default: '', trim: true },
-    philoText: { type: String, default: '', trim: true },
-    philImage1: { type: String, default: '' },
-    philImage2: { type: String, default: '' },
-    servicesTitle: { type: String, default: '', trim: true },
-    servicesBadge: { type: String, default: '', trim: true },
-    ctaTitle: { type: String, default: '', trim: true }
-  }
+  // On simplifie la structure pour que ça corresponde exactement à ton Frontend
+  heroImage: { type: String, default: '' },
+  philImage1: { type: String, default: '' },
+  philImage2: { type: String, default: '' },
+  schoolImage: { type: String, default: '' }, // <-- AJOUTÉ pour la page Équipe
+  
+  // Tu peux garder les textes si tu comptes les rendre modifiables plus tard
+  heroTitle: { type: String, default: '' },
+  heroSubtitle: { type: String, default: '' },
+  philoTitle: { type: String, default: '' },
+  philoText: { type: String, default: '' }
 }, { 
   timestamps: true 
 });

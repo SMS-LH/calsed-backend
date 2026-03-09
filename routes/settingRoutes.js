@@ -3,35 +3,33 @@ const router = express.Router();
 const Settings = require('../models/Settings');
 const { protect, admin } = require('../middleware/authMiddleware');
 
-// Lire les paramètres (Public - Tout le monde doit pouvoir charger l'accueil)
+// @route   GET /api/settings
 router.get('/', async (req, res) => {
   try {
-    // On cherche la config "home_config" ou on en crée une vide si inexistante
     let settings = await Settings.findOne({ key: 'home_config' });
     
     if (!settings) {
-        settings = new Settings({ key: 'home_config', data: {} });
-        await settings.save();
+        // On crée un document avec les valeurs par défaut du modèle
+        settings = await Settings.create({ key: 'home_config' });
     }
     
     res.json(settings);
   } catch (err) {
-    console.error("Erreur GET settings:", err);
     res.status(500).json({ message: "Erreur chargement configuration" });
   }
 });
 
-// Modifier les paramètres (Sécurisé : Admin uniquement)
+// @route   PUT /api/settings
 router.put('/', protect, admin, async (req, res) => {
   try {
+    // Correction : On passe directement req.body pour matcher la structure du modèle
     const settings = await Settings.findOneAndUpdate(
       { key: 'home_config' },
-      { $set: { data: req.body } },
-      { new: true, upsert: true } // Met à jour et retourne le nouveau, ou le crée s'il n'existe pas
+      { $set: req.body }, 
+      { new: true, upsert: true }
     );
     res.json(settings);
   } catch (err) {
-    console.error("Erreur PUT settings:", err);
     res.status(500).json({ message: "Erreur sauvegarde configuration" });
   }
 });

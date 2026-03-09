@@ -1,17 +1,23 @@
 const express = require('express');
 const router = express.Router();
-const upload = require('../middleware/uploadMiddleware'); // Import du middleware sécurisé
+const multer = require('multer');
+const { storage } = require('../config/cloudinary');
 
-// Route: POST /api/upload
-// Description: Upload une seule image et renvoie son chemin
+const upload = multer({ storage: storage });
+
 router.post('/', upload.single('image'), (req, res) => {
   try {
-    // Normalisation du chemin (remplace les backslashes Windows \ par des slashs /)
-    const filePath = `/${req.file.path.replace(/\\/g, "/")}`;
+    if (!req.file) {
+      return res.status(400).json({ message: "Aucun fichier reçu" });
+    }
+
+    // Cloudinary renvoie l'URL complète dans req.file.path
+    const imageUrl = req.file.path; 
     
-    res.send(filePath);
+    // On renvoie cette URL au Frontend
+    res.status(200).send(imageUrl); 
   } catch (err) {
-    res.status(400).send({ message: "Erreur lors de l'upload de l'image" });
+    res.status(500).json({ message: "Erreur lors de l'upload cloud" });
   }
 });
 

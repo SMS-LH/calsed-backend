@@ -10,7 +10,7 @@ const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 
 // --- CONFIGURATION ---
-const connectDB = require('./config/db'); // Utilisation de ta nouvelle config DB
+const connectDB = require('./config/db');
 
 // --- IMPORT DES ROUTES ---
 const authRoutes = require('./routes/authRoutes');
@@ -25,43 +25,44 @@ const donateRoutes = require('./routes/donate');
 const newsletterRoutes = require('./routes/newsletter');
 const uploadRoutes = require('./routes/upload');
 const paymentRoutes = require('./routes/paymentRoutes');
-const settingRoutes = require('./routes/settingRoutes'); // <-- AJOUT DE LA ROUTE SETTINGS
+const settingRoutes = require('./routes/settingRoutes');
+const teamRoutes = require('./routes/teamRoutes'); // <-- AJOUT : Route Bureau National
 
 // --- INITIALISATION APP ---
 const app = express();
 
+// Indispensable pour Render (détection correcte des IP derrière le proxy)
 app.set('trust proxy', 1);
+
 // --- CONNEXION BASE DE DONNÉES ---
-connectDB(); // Appel de la fonction isolée dans config/db.js
+connectDB();
 
 // --- CONFIGURATION MIDDLEWARES GLOBAUX ---
 
-// 1. Sécurité des Headers (Helmet)
-// Note: On configure crossOriginResourcePolicy pour autoriser l'affichage des images uploadées
-app.use(helmet());
-app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
+// Helmet : On autorise les ressources externes (Cloudinary)
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 
-// 2. Compression des réponses (Vitesse)
 app.use(compression());
 
-// 3. Gestion des CORS
+// Configuration CORS : Tu peux restreindre à ton FRONTEND_URL en production
 app.use(cors());
 
-// 4. Parsing JSON
 app.use(express.json());
 
-// 5. Limitation des requêtes (Rate Limiting)
-// Limite chaque IP à 100 requêtes toutes les 15 minutes pour éviter le DDOS/Brute-force
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, 
   max: 100, 
   standardHeaders: true,
   legacyHeaders: false,
-  message: "Trop de requêtes depuis cette IP, veuillez réessayer plus tard."
+  message: "Trop de requêtes depuis cette IP."
 });
-app.use('/api', limiter); // Appliqué uniquement sur les routes API
+app.use('/api', limiter);
 
 // --- GESTION DES FICHIERS STATIQUES ---
+// On garde cette partie pour ne pas casser d'anciennes images, 
+// mais Cloudinary prendra le relais pour les nouvelles.
 const uploadDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
@@ -81,16 +82,17 @@ app.use('/api/donate', donateRoutes);
 app.use('/api/newsletter', newsletterRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/payment', paymentRoutes);
-app.use('/api/settings', settingRoutes); // <-- AJOUT DU MIDDLEWARE SETTINGS
+app.use('/api/settings', settingRoutes);
+app.use('/api/team', teamRoutes); // <-- AJOUT : Liaison de la route Team
 
-// --- ROUTE DE SANTÉ (HEALTH CHECK) ---
+// --- ROUTE DE SANTÉ ---
 app.get('/', (req, res) => {
-  res.status(200).send('🚀 API CALSED opérationnelle et sécurisée !');
+  res.status(200).send('🚀 API CALSED opérationnelle, synchronisée et sécurisée !');
 });
 
 // --- GESTION DES ERREURS 404 ---
-app.use((req, res, next) => {
-    res.status(404).json({ message: "Route non trouvée" });
+app.use((req, res) => {
+    res.status(404).json({ message: "Route non trouvée sur le serveur" });
 });
 
 // --- LANCEMENT DU SERVEUR ---
