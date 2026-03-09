@@ -30,6 +30,7 @@ const settingRoutes = require('./routes/settingRoutes'); // <-- AJOUT DE LA ROUT
 // --- INITIALISATION APP ---
 const app = express();
 
+app.set('trust proxy', 1);
 // --- CONNEXION BASE DE DONNÉES ---
 connectDB(); // Appel de la fonction isolée dans config/db.js
 
