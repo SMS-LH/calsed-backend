@@ -21,14 +21,22 @@ router.post('/', async (req, res) => {
     </div>
   `;
 
-  try {
-    // Envoi à l'email configuré dans .env (ADMIN_EMAIL ou EMAIL_USER)
-    await sendEmail(process.env.ADMIN_EMAIL || process.env.EMAIL_USER, `Contact CALSED: ${subject}`, htmlContent, email);
+ try {
+    // On stocke le résultat de l'envoi
+    const emailTarget = process.env.ADMIN_EMAIL || process.env.EMAIL_USER;
+    const result = await sendEmail(emailTarget, `Contact CALSED: ${subject}`, htmlContent, email);
     
+    // Si result est null, l'envoi a échoué silencieusement dans mailer.js
+    if (!result) {
+      return res.status(500).json({ message: "Le serveur mail est indisponible. Veuillez réessayer plus tard." });
+    }
+    
+    // Si tout va bien, on confirme au frontend
     res.status(200).json({ success: true, message: "Votre message a bien été envoyé." });
+    
   } catch (error) {
     console.error("Erreur Contact:", error);
-    res.status(500).json({ message: "Erreur lors de l'envoi du message." });
+    res.status(500).json({ message: "Erreur critique lors de l'envoi du message." });
   }
 });
 

@@ -40,6 +40,26 @@ exports.createPost = async (req, res) => {
   }
 };
 
+// NOUVEAU : LA FONCTION DE MODIFICATION (UPDATE)
+exports.updatePost = async (req, res) => {
+  try {
+    const updatedPost = await Post.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true } // Renvoie le nouvel article et vérifie les règles du modèle
+    );
+
+    if (!updatedPost) {
+      return res.status(404).json({ message: "Article non trouvé" });
+    }
+
+    res.status(200).json(updatedPost);
+  } catch (err) {
+    console.error("Erreur mise à jour article:", err);
+    res.status(500).json({ message: "Erreur lors de la modification de l'article" });
+  }
+};
+
 exports.deletePost = async (req, res) => {
   try {
     await Post.findByIdAndDelete(req.params.id);
