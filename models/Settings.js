@@ -6,13 +6,13 @@ const settingsSchema = new mongoose.Schema({
     default: "home_config", 
     unique: true 
   },
-  // On simplifie la structure pour que ça corresponde exactement à ton Frontend
+  // Structure simplifiée : correspond exactement aux états de ton Frontend
   heroImage: { type: String, default: '' },
   philImage1: { type: String, default: '' },
   philImage2: { type: String, default: '' },
-  schoolImage: { type: String, default: '' }, // <-- AJOUTÉ pour la page Équipe
+  schoolImage: { type: String, default: '' }, // Utilisé pour la page Équipe
   
-  // Tu peux garder les textes si tu comptes les rendre modifiables plus tard
+  // Textes (conservés pour de futures fonctionnalités)
   heroTitle: { type: String, default: '' },
   heroSubtitle: { type: String, default: '' },
   philoTitle: { type: String, default: '' },
