@@ -246,6 +246,51 @@ const sendPaymentDeclarationAlert = async (user, payment) => {
   return sendEmail(process.env.ADMIN_EMAIL, `💸 Nouvelle Déclaration : ${payment.amount} FCFA de ${user.prenom} ${user.nom}`, html);
 };
 
+// --- NOUVEAU : ALERTE CRÉATION D'ÉVÉNEMENT ---
+const sendNewEventAlert = async (members, event) => {
+  const subject = `📅 Nouvel événement CALSED : ${event.title}`;
+
+  // Formatage de la date (s'assure d'avoir un bel affichage en français)
+  const eventDateObj = new Date(event.date);
+  const eventDate = eventDateObj.toLocaleDateString('fr-FR', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+  
+  // Extraction de l'heure. Si event.time n'existe pas, on tente de la récupérer depuis event.date
+  const eventTime = event.time || eventDateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+
+  const promises = members.map(member => {
+    const html = `
+      <div style="font-family: Arial, sans-serif; border: 1px solid #eee; padding: 20px; max-width: 600px; margin: auto; border-radius: 8px;">
+        <div style="background-color: #0A2A5C; padding: 15px; text-align: center; color: white; border-radius: 8px 8px 0 0;">
+          <h2 style="margin:0;">Agenda du CALSED</h2>
+        </div>
+        <div style="padding: 20px; background-color: #fcfcfc;">
+          <h2 style="color: #d97706; text-align: center; margin-top: 0;">📅 ${event.title}</h2>
+          <p>Bonjour ${member.prenom || member.name || ''},</p>
+          <p>Le réseau CALSED a le plaisir de vous convier à un nouvel événement :</p>
+          
+          <div style="background-color: #ffffff; padding: 15px; border-left: 4px solid #0A2A5C; margin: 20px 0; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <p style="margin: 5px 0;"><strong>🏷️ Type :</strong> <span style="background: #e0e7ff; color: #1e40af; padding: 2px 8px; border-radius: 12px; font-size: 12px;">${event.type || 'Événement'}</span></p>
+            <p style="margin: 5px 0;"><strong>🕒 Date et heure :</strong> Le ${eventDate} à ${eventTime}</p>
+            <p style="margin: 5px 0;"><strong>📍 Lieu / Lien :</strong> ${event.location || 'À définir'}</p>
+            ${event.description ? `<p style="margin: 15px 0 5px 0; color: #555; font-style: italic;">"${event.description}"</p>` : ''}
+          </div>
+          
+          <div style="text-align: center; margin-top: 25px;">
+            <a href="${process.env.FRONTEND_URL}/evenements" style="background-color: #0A2A5C; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Consulter le calendrier</a>
+          </div>
+        </div>
+        <hr style="border: 0; border-top: 1px solid #eee; margin-top: 20px;">
+        <p style="font-size: 12px; color: #888; text-align: center;">Vous recevez cet email car vous êtes inscrit(e) dans l'annuaire du réseau CALSED.</p>
+      </div>`;
+    
+    return sendEmail(member.email, subject, html);
+  });
+
+  return Promise.all(promises);
+};
+
 module.exports = { 
   sendEmail, 
   sendAdminNotification, 
@@ -257,5 +302,6 @@ module.exports = {
   sendOrderDelivered,
   sendNewPostAlert, 
   sendNewProductAlert,
-  sendPaymentDeclarationAlert
+  sendPaymentDeclarationAlert,
+  sendNewEventAlert // <-- N'oubliez pas l'export !
 };
