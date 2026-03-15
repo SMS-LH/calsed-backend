@@ -1,5 +1,5 @@
-const express = require('express'); // 1. On importe express
-const router = express.Router();    // 2. On initialise le router
+const express = require('express');
+const router = express.Router();
 const Event = require('../models/Event');
 const User = require('../models/User'); 
 const { protect, admin } = require('../middleware/authMiddleware');
@@ -27,22 +27,30 @@ router.post('/', protect, admin, async (req, res) => {
     const savedEvent = await newEvent.save();
     console.log("✅ Événement enregistré ID:", savedEvent._id);
 
-    // Fonction d'envoi d'emails en arrière-plan
+    // ---- PARTIE EMAILS (AVEC MOUCHARDS) ----
     const processEmails = async () => {
+      console.log("🔍 ETAPE 1 : Lancement de la recherche des membres...");
       try {
         const members = await User.find({ isApproved: true }, 'email prenom nom name');
+        console.log(`📊 ETAPE 2 : J'ai trouvé ${members.length} membres validés dans la base de données.`);
+        
         if (members.length > 0) {
-          console.log(`📧 Envoi d'emails à ${members.length} membres...`);
+          console.log("🚀 ETAPE 3 : J'envoie les emails maintenant...");
           await sendNewEventAlert(members, savedEvent);
-          console.log("✅ Emails envoyés.");
+          console.log("✅ ETAPE 4 : Tous les emails ont été envoyés !");
+        } else {
+          console.log("⚠️ ETAPE 3bis : Je n'envoie rien car il y a 0 membre validé.");
         }
       } catch (err) {
-        console.error("❌ Erreur mailer :", err.message);
+        console.error("❌ ERREUR FATALE PENDANT LES EMAILS :", err);
       }
     };
 
-    processEmails(); // Lancement sans await pour ne pas bloquer la réponse
+    // On déclenche la fonction des emails
+    processEmails();
+    // ----------------------------------------
 
+    // On répond au site web que c'est bon
     res.status(201).json(savedEvent);
   } catch (err) {
     console.error("❌ Erreur création événement :", err.message);
@@ -60,4 +68,4 @@ router.delete('/:id', protect, admin, async (req, res) => {
   }
 });
 
-module.exports = router; // 3. On exporte le router
+module.exports = router;
