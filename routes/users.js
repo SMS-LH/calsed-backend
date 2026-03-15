@@ -6,9 +6,24 @@ const { protect, admin } = require('../middleware/authMiddleware');
 const { sendMemberStatusEmail, sendReminderEmail } = require('../utils/mailer');
 
 // --- 1. RÉCUPÉRER TOUS LES MEMBRES (ADMIN SEULEMENT) ---
+// Utilisé par le tableau de bord Admin pour gérer tout le monde
 router.get('/', protect, admin, async (req, res) => {
   try {
     const users = await User.find({ role: { $ne: 'admin' } })
+      .select('-password') 
+      .sort({ name: 1 });
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// --- 1.BIS RÉCUPÉRER L'ANNUAIRE (MEMBRES CONNECTÉS) ---
+// NOUVEAU : Utilisé par la page Annuaire du site public
+router.get('/directory', protect, async (req, res) => {
+  try {
+    // On ne renvoie QUE les membres qui ont été validés
+    const users = await User.find({ role: { $ne: 'admin' }, isValidated: true })
       .select('-password') 
       .sort({ name: 1 });
     res.json(users);
@@ -31,21 +46,17 @@ router.get('/:id', protect, async (req, res) => {
 // --- 3. MISE À JOUR DU PROFIL (PROTECT) ---
 router.put('/profile', protect, async (req, res) => {
   try {
-    // Sécurité : On s'assure que l'utilisateur ne modifie que SON profil (ou est admin)
-    // (Sauf si c'est pour mettre à jour ses propres infos)
     let updateData = { ...req.body };
     const userIdToUpdate = updateData._id || updateData.id;
 
-    // Si l'ID envoyé n'est pas celui du token et qu'on n'est pas admin => Erreur
     if (userIdToUpdate !== req.user.id && req.user.role !== 'admin') {
         return res.status(401).json({ message: "Non autorisé" });
     }
     
-    // Nettoyage
     delete updateData._id;
     delete updateData.id;
-    delete updateData.email; // On évite de changer l'email ici pour la sécurité
-    delete updateData.password; // Jamais de mdp ici
+    delete updateData.email; 
+    delete updateData.password; 
 
     const updatedUser = await User.findByIdAndUpdate(
         userIdToUpdate, 
