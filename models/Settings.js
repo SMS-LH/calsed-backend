@@ -6,17 +6,31 @@ const settingsSchema = new mongoose.Schema({
     default: "home_config", 
     unique: true 
   },
-  // Structure simplifiée : correspond exactement aux états de ton Frontend
+  // --- IMAGES ---
   heroImage: { type: String, default: '' },
   philImage1: { type: String, default: '' },
   philImage2: { type: String, default: '' },
-  schoolImage: { type: String, default: '' }, // Utilisé pour la page Équipe
+  schoolImage: { type: String, default: '' }, 
   
-  // Textes (conservés pour de futures fonctionnalités)
+  // --- ANCIENS TEXTES (Conservés au cas où) ---
   heroTitle: { type: String, default: '' },
   heroSubtitle: { type: String, default: '' },
   philoTitle: { type: String, default: '' },
-  philoText: { type: String, default: '' }
+  philoText: { type: String, default: '' },
+
+  // --- NOUVELLES STATISTIQUES ---
+  stat1Number: { type: String, default: '2016' },
+  stat1Label: { type: String, default: 'Année de création' },
+  
+  stat2Number: { type: String, default: '+500' },
+  stat2Label: { type: String, default: 'Anciens élèves' },
+  
+  stat3Number: { type: String, default: '15' },
+  stat3Label: { type: String, default: 'Pays de résidence' },
+  
+  stat4Number: { type: String, default: '100%' },
+  stat4Label: { type: String, default: 'Engagement' }
+
 }, { 
   timestamps: true 
 });
