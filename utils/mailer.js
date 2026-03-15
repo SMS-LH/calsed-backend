@@ -243,7 +243,7 @@ const sendPaymentDeclarationAlert = async (user, payment) => {
       </div>
     </div>`;
   
-  return sendEmail(process.env.ADMIN_EMAIL, `💸 Nouvelle Déclaration : ${payment.amount} FCFA de ${user.prenom} ${user.nom}`, html);
+  return sendEmail(process.env.EMAIL_USER, `💸 Nouvelle Déclaration : ${payment.amount} FCFA de ${user.prenom} ${user.nom}`, html);
 };
 
 // --- NOUVEAU : ALERTE CRÉATION D'ÉVÉNEMENT ---
