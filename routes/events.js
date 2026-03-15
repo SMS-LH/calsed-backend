@@ -1,8 +1,23 @@
-router.post('/', protect, admin, async (req, res) => {
-  // LOG 1 : Vérifier si la requête arrive au serveur
-  console.log("--- [START] Requête POST /events reçue ---");
-  console.log("Payload reçu :", req.body);
+const express = require('express'); // 1. On importe express
+const router = express.Router();    // 2. On initialise le router
+const Event = require('../models/Event');
+const User = require('../models/User'); 
+const { protect, admin } = require('../middleware/authMiddleware');
+const { sendNewEventAlert } = require('../utils/mailer');
 
+// 1. Lire tous les événements (Public)
+router.get('/', async (req, res) => {
+  try {
+    const events = await Event.find().sort({ date: 1 });
+    res.json(events);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// 2. Créer un événement (Admin seulement)
+router.post('/', protect, admin, async (req, res) => {
+  console.log("--- [START] Requête POST /events reçue ---");
   try {
     const newEvent = new Event({
         ...req.body,
@@ -10,40 +25,39 @@ router.post('/', protect, admin, async (req, res) => {
     });
     
     const savedEvent = await newEvent.save();
-    
-    // LOG 2 : Confirmation de sauvegarde en base
-    console.log("✅ Événement enregistré en base de données, ID:", savedEvent._id);
+    console.log("✅ Événement enregistré ID:", savedEvent._id);
 
-    // --- LOGIQUE ENVOI MAILS ---
-    // On ne met pas de await ici pour ne pas faire attendre l'admin
+    // Fonction d'envoi d'emails en arrière-plan
     const processEmails = async () => {
       try {
-        console.log("🔍 Recherche des membres approuvés...");
         const members = await User.find({ isApproved: true }, 'email prenom nom name');
-        console.log(`📧 Membres trouvés : ${members.length}`);
-        
         if (members.length > 0) {
-          console.log("🚀 Lancement de l'envoi des emails via sendNewEventAlert...");
+          console.log(`📧 Envoi d'emails à ${members.length} membres...`);
           await sendNewEventAlert(members, savedEvent);
-          console.log("✅ Processus d'envoi terminé sans erreur fatale.");
-        } else {
-          console.log("⚠️ Aucun mail envoyé : aucun membre 'isApproved: true' trouvé.");
+          console.log("✅ Emails envoyés.");
         }
       } catch (err) {
-        console.error("❌ Erreur interne au processus de mail :", err.message);
+        console.error("❌ Erreur mailer :", err.message);
       }
     };
 
-    // On lance la fonction sans l'attendre
-    processEmails();
+    processEmails(); // Lancement sans await pour ne pas bloquer la réponse
 
-    // Réponse immédiate au Frontend
-    console.log("--- [END] Envoi de la réponse 201 au client ---");
-    return res.status(201).json(savedEvent);
-
+    res.status(201).json(savedEvent);
   } catch (err) {
-    // LOG D'ERREUR CRITIQUE
-    console.error("❌ ERREUR GLOBALE route POST /events :", err.message);
-    return res.status(400).json({ message: err.message });
+    console.error("❌ Erreur création événement :", err.message);
+    res.status(400).json({ message: err.message });
   }
 });
+
+// 3. Supprimer un événement (Admin seulement)
+router.delete('/:id', protect, admin, async (req, res) => {
+  try {
+    await Event.findByIdAndDelete(req.params.id);
+    res.json({ message: "Événement supprimé" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+module.exports = router; // 3. On exporte le router
