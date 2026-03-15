@@ -31,7 +31,7 @@ router.post('/', protect, admin, async (req, res) => {
     const processEmails = async () => {
       console.log("🔍 ETAPE 1 : Lancement de la recherche des membres...");
       try {
-        const members = await User.find({ isApproved: true }, 'email prenom nom name');
+        const members = await User.find({ isValidated: true }, 'email name');
         console.log(`📊 ETAPE 2 : J'ai trouvé ${members.length} membres validés dans la base de données.`);
         
         if (members.length > 0) {
