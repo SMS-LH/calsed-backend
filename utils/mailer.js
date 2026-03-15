@@ -224,11 +224,12 @@ const sendNewProductAlert = async (subscribers, product) => {
 
 // --- NOUVEAU : ALERTE DÉCLARATION COTISATION (WAVE/OM) ---
 const sendPaymentDeclarationAlert = async (user, payment) => {
+  // CORRECTION ICI : Remplacement de user.prenom et user.nom par user.name
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
       <h2 style="color: #0A2A5C; text-align: center; border-bottom: 2px solid #eee; padding-bottom: 10px;">💰 Déclaration de Cotisation</h2>
       <p>Bonjour Admin,</p>
-      <p>Le membre <strong>${user.prenom} ${user.nom}</strong> vient de déclarer avoir effectué un transfert pour sa cotisation.</p>
+      <p>Le membre <strong>${user.name}</strong> vient de déclarer avoir effectué un transfert pour sa cotisation.</p>
       
       <div style="background-color: #f8f9fa; padding: 15px; border-left: 4px solid #f59e0b; margin: 20px 0;">
         <p style="margin: 5px 0;"><strong>Montant attendu :</strong> <span style="font-size: 18px; font-weight: bold; color: #0A2A5C;">${payment.amount.toLocaleString()} FCFA</span></p>
@@ -243,7 +244,8 @@ const sendPaymentDeclarationAlert = async (user, payment) => {
       </div>
     </div>`;
   
-  return sendEmail(process.env.EMAIL_USER, `💸 Nouvelle Déclaration : ${payment.amount} FCFA de ${user.prenom} ${user.nom}`, html);
+  // CORRECTION ICI AUSSI dans le sujet du mail :
+  return sendEmail(process.env.EMAIL_USER, `💸 Nouvelle Déclaration : ${payment.amount} FCFA de ${user.name}`, html);
 };
 
 // --- NOUVEAU : ALERTE CRÉATION D'ÉVÉNEMENT ---
@@ -260,6 +262,7 @@ const sendNewEventAlert = async (members, event) => {
   const eventTime = event.time || eventDateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 
   const promises = members.map(member => {
+    // CORRECTION ICI : Remplacement par member.name
     const html = `
       <div style="font-family: Arial, sans-serif; border: 1px solid #eee; padding: 20px; max-width: 600px; margin: auto; border-radius: 8px;">
         <div style="background-color: #0A2A5C; padding: 15px; text-align: center; color: white; border-radius: 8px 8px 0 0;">
@@ -267,7 +270,7 @@ const sendNewEventAlert = async (members, event) => {
         </div>
         <div style="padding: 20px; background-color: #fcfcfc;">
           <h2 style="color: #d97706; text-align: center; margin-top: 0;">📅 ${event.title}</h2>
-          <p>Bonjour ${member.prenom || member.name || ''},</p>
+          <p>Bonjour ${member.name},</p>
           <p>Le réseau CALSED a le plaisir de vous convier à un nouvel événement :</p>
           
           <div style="background-color: #ffffff; padding: 15px; border-left: 4px solid #0A2A5C; margin: 20px 0; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
@@ -303,5 +306,5 @@ module.exports = {
   sendNewPostAlert, 
   sendNewProductAlert,
   sendPaymentDeclarationAlert,
-  sendNewEventAlert // <-- N'oubliez pas l'export !
+  sendNewEventAlert
 };
