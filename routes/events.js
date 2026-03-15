@@ -1,65 +1,49 @@
-const express = require('express');
-const router = express.Router();
-const Event = require('../models/Event');
-const User = require('../models/User'); // <-- AJOUT : On a besoin du modèle User pour trouver les membres
-const { protect, admin } = require('../middleware/authMiddleware');
-const { sendNewEventAlert } = require('../utils/mailer'); // <-- AJOUT : Import de la fonction d'email (Ajuste le chemin si ton fichier s'appelle autrement)
-
-// 1. Lire tous les événements (Public)
-router.get('/', async (req, res) => {
-  try {
-    // Tri par date : du plus proche au plus lointain
-    const events = await Event.find().sort({ date: 1 });
-    res.json(events);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// 2. Créer un événement (Admin seulement)
 router.post('/', protect, admin, async (req, res) => {
+  // LOG 1 : Vérifier si la requête arrive au serveur
+  console.log("--- [START] Requête POST /events reçue ---");
+  console.log("Payload reçu :", req.body);
+
   try {
     const newEvent = new Event({
         ...req.body,
         createdBy: req.user.id
     });
+    
     const savedEvent = await newEvent.save();
+    
+    // LOG 2 : Confirmation de sauvegarde en base
+    console.log("✅ Événement enregistré en base de données, ID:", savedEvent._id);
 
-    // --- NOUVEAU : ENVOI DES INVITATIONS AUX MEMBRES ---
-    // On l'enveloppe dans un bloc try/catch séparé pour être sûr que 
-    // même si le mail échoue, l'événement est bien créé.
-    try {
-      // On cherche uniquement les membres validés (isApproved: true)
-      // On récupère juste l'email, le prénom et le nom pour alléger la mémoire
-      const members = await User.find({ isApproved: true }, 'email prenom nom name');
-      
-      if (members.length > 0) {
-        // On n'utilise PAS de 'await' ici intentionnellement !
-        // Ça permet de répondre au Frontend immédiatement pendant que le serveur gère les envois en fond.
-        sendNewEventAlert(members, savedEvent)
-          .then(() => console.log(`✅ Invitations envoyées à ${members.length} membres.`))
-          .catch(err => console.error('❌ Erreur envoi invitations événement:', err));
+    // --- LOGIQUE ENVOI MAILS ---
+    // On ne met pas de await ici pour ne pas faire attendre l'admin
+    const processEmails = async () => {
+      try {
+        console.log("🔍 Recherche des membres approuvés...");
+        const members = await User.find({ isApproved: true }, 'email prenom nom name');
+        console.log(`📧 Membres trouvés : ${members.length}`);
+        
+        if (members.length > 0) {
+          console.log("🚀 Lancement de l'envoi des emails via sendNewEventAlert...");
+          await sendNewEventAlert(members, savedEvent);
+          console.log("✅ Processus d'envoi terminé sans erreur fatale.");
+        } else {
+          console.log("⚠️ Aucun mail envoyé : aucun membre 'isApproved: true' trouvé.");
+        }
+      } catch (err) {
+        console.error("❌ Erreur interne au processus de mail :", err.message);
       }
-    } catch (mailError) {
-      console.error("Erreur lors de la récupération des membres :", mailError);
-    }
-    // ---------------------------------------------------
+    };
 
-    // On répond au Frontend que c'est un succès immédiat
-    res.status(201).json(savedEvent);
+    // On lance la fonction sans l'attendre
+    processEmails();
+
+    // Réponse immédiate au Frontend
+    console.log("--- [END] Envoi de la réponse 201 au client ---");
+    return res.status(201).json(savedEvent);
+
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    // LOG D'ERREUR CRITIQUE
+    console.error("❌ ERREUR GLOBALE route POST /events :", err.message);
+    return res.status(400).json({ message: err.message });
   }
 });
-
-// 3. Supprimer un événement (Admin seulement)
-router.delete('/:id', protect, admin, async (req, res) => {
-  try {
-    await Event.findByIdAndDelete(req.params.id);
-    res.json({ message: "Événement supprimé" });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-module.exports = router;
