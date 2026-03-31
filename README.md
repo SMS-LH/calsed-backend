@@ -2,7 +2,7 @@
 
 Bienvenue sur le code source du serveur et de l'API du projet **CALSED** (Collectif des Anciens du Lycée Scientifique d'Excellence de Diourbel).
 
-> ⚠️ **Avertissement :** Ce code est partagé uniquement pour que l'on puisse m'aider à le lire, l'auditer et le corriger. Ce n'est pas un projet open-source collaboratif. Merci de ne pas modifier le code sans m'en parler au préalable.
+
 
 ## 🚀 Ce que fait cette partie du projet
 C'est le "cerveau" du site. Il tourne en arrière-plan, gère la base de données et assure la sécurité :
