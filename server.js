@@ -47,7 +47,27 @@ app.use(helmet({
 app.use(compression());
 
 // Configuration CORS : Tu peux restreindre à ton FRONTEND_URL en production
-app.use(cors());
+// CORS correctement configuré pour la production
+const allowedOrigins = [
+  process.env.FRONTEND_URL,          // Valeur depuis le .env (ex: https://calsed-frontend.vercel.app)
+  'http://localhost:3000',            // Pour le développement local
+  'http://localhost:5173',            // Pour Vite en développement local
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // On autorise les requêtes sans origin (ex: Postman, apps mobiles)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);  // Origin autorisée ✅
+    } else {
+      return callback(new Error('Bloqué par la politique CORS'));  // Origin refusée ❌
+    }
+  },
+  credentials: true,  // Indispensable pour que les tokens JWT passent correctement
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 
 // --- CORRECTION PAYLOAD (Articles longs & Images Base64) ---
 app.use(express.json({ limit: '50mb' }));
