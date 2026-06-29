@@ -46,12 +46,13 @@ app.use(helmet({
 
 app.use(compression());
 
-// Configuration CORS : Tu peux restreindre à ton FRONTEND_URL en production
-// CORS correctement configuré pour la production
+// ✅ CORS correctement configuré pour la production
 const allowedOrigins = [
-  process.env.FRONTEND_URL,          // Valeur depuis le .env (ex: https://calsed-frontend.vercel.app)
-  'http://localhost:3000',            // Pour le développement local
-  'http://localhost:5173',            // Pour Vite en développement local
+  'https://calsed-frontend.vercel.app',         // Ancien frontend (compte Mourtalla)
+  'https://calsed-frontend-mu.vercel.app',       // Nouveau frontend (ton compte) ✅
+  process.env.FRONTEND_URL,                      // Variable d'environnement Render
+  'http://localhost:3000',                        // Développement local (CRA)
+  'http://localhost:5173',                        // Développement local (Vite)
 ];
 
 app.use(cors({
